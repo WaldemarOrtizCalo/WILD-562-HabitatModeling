@@ -163,7 +163,7 @@ summary(logitRoads)
 ggplot(cougar, aes(x=Slope, y=UseNonUse)) + geom_rug() + stat_smooth(method="glm", method.args=list(family="binomial"))
 ggplot(cougar, aes(x=CoverDist, y=UseNonUse)) + geom_rug() + stat_smooth(method="glm", method.args=list(family="binomial"))
 #   Spatial Data                                                            ####
-#        [Shapefile]                                                        ####
+#      [Shapefile]                                                          ####
 # make a very basic plot of shapefile after resetting graphical parameters
 par(mfrow= c(1,1))
 plot(elc_habitat)
@@ -203,7 +203,7 @@ writeOGR(elc_habitat,".","elc_habitat_NEW",driver="ESRI Shapefile", overwrite_la
 extent(elc_habitat)
 extent(wolfyht)
 
-#        [Raster]                                                           ####
+#      [Raster]                                                             ####
 
 ## reset graphical parameters
 par(mfrow= c(1,1)) 
@@ -261,8 +261,7 @@ plot(all.rasters)
 class(all.rasters)
 
 #learn more about 
-#?writeRaster()
-writeRaster(deer_w, "1.Data\\Lab1_data\\new_deer.tiff", "GTiff", overwrite=TRUE)
+#writeRaster(deer_w, "1.Data\\Lab1_data\\new_deer.tiff", "GTiff", overwrite=TRUE)
 
 # Mapping with Mapview
 
