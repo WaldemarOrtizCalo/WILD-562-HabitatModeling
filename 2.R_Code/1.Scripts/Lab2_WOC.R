@@ -442,6 +442,7 @@ plot(wolfyht@data$EASTING,wolfyht@data$NORTHING, col=c("red","blue")[wolfyht@dat
 legend(555000,5742500,unique(wolfyht@data$Pack),col=c("blue","red"),pch=1)
 plot(bv.avail, add=TRUE)
 plot(rd.avail, add=TRUE)
+
 ###############################################################################
 #   OBJECTIVE 4 - Extracting GIS covariates For Points                      ####
 ## 
