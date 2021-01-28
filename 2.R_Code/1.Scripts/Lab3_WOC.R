@@ -1,74 +1,38 @@
-title: "WILD 562 - Lab 3: Habitat Selection & Logistic Regression"
-author: "Mark Hebblewhite"
+#   Script Details                                                          ####
 
+# Author: Waldemar Ortiz-Calo
 
-setwd("/Users/mark.hebblewhite/Box Sync/Teaching/UofMcourses/WILD562/Spring2021/Labs/Lab3/")
+# Date:2021-01-28 
 
+# Purpose: Re-writing Dr. Mark Hebblewhite's Lab 3 code. 
 
-# Introduction to the Logistic Regression Model for Used-Available Data
+###############################################################################
+#   Library / Functions / Data                                              ####
 
+#      Library                                                              ####
+library(ggplot2)
+library(lattice)
+library(tidyverse)
+library(effects)
+library(magrittr)
 
-## Lab 3 Objectives 
-#  
-#   1. Merge the wolf used and wolf availability datasets from last weeks lab based on the Kernel Density Estimated home range for both wolf packs. 
-# 
-# 2. Conduct graphical and numerical data exploration of the differences between USED and AVAILABLE locations for each wolf pack for the ~ 8 ecologial covariates we developed in Lab 2. 
-# 
-# 3. Learn about logistic regression through simulation. 
-# 
-# 4. Fit Univariate logistic regression to wolf used-available data. 
-# 
-# 5. Learn how to interpret Logistic regression coefficients. 
-# 
-# 6. Making graphical predictions of the results of logistic regression models for our univariate covariates. 
+#      Functions                                                            ####
 
-### Preliminaries: getting started, loading packages, setting working directory
+#      Data                                                                 ####
+#        [Objective 1]                                                      ####
 
-#function to install and load required packages
-ipak <- function(pkg){
-  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-  if (length(new.pkg)) 
-    install.packages(new.pkg, dependencies = TRUE)
-  sapply(pkg, require, character.only = TRUE)
-}
-
-#load or install these packages:
-packages <- c("ggplot2","lattice", "tidyverse", "effects")
-
-#run function to install packages
-ipak(packages)
-
-### Preliminaries: Merging the wolf availabiltiy sample from the KDE's from last week. 
-# rdavail <- as.data.frame(cov.availRD)
-# rdavail$pack <- c("Red Deer")
-# 
-# #repeat for Bow Valley pack
-# bvavail <- as.data.frame(cov.availBV)
-# bvavail$pack <- c("Bow Valley")
-# 
-# ## merge the two availability samples together
-# wolfavail <- rbind(rdavail, bvavail)
-# 
-# ## and for next week, lets add a new column for a 1=used 0 = avail
-# wolfavail$used <- 0
-# 
-# write.table(wolfused, file = "wolfused.csv", row.names=FALSE, na="", col.names=TRUE, sep=",")
-# write.table(wolfavail, file = "wolfavail.csv", row.names=FALSE, na="", col.names=TRUE, sep=",")
-
-# Objective 1) Exploring Merged Wolf USED and AVAIL datasets
-
-wolfused <-read.csv("Data/wolfused.csv", header = TRUE)
-wolfavail <-read.csv("Data/wolfavail.csv", header = TRUE)
+wolfused <-read.csv("1.Data/Lab3_data/wolfused.csv", header = TRUE)
+wolfavail <-read.csv("1.Data/Lab3_data/wolfavail.csv", header = TRUE)
 
 wolfkde <- rbind(wolfused, wolfavail)
 str(wolfkde)
 table(wolfkde$used, wolfkde$pack)
 table(wolfkde$used, wolfkde$deer_w2)
 
-## next we will create a new variable called usedFactor and graphically compare USED and AVAIL locations for prey
 wolfkde$usedFactor <- factor(wolfkde$used, labels=c('0','1'))
 str(wolfkde)
-
+###############################################################################
+#   [OBJECTIVE 1 - Exploration of the Data]                                 ####
 ## Graphical Data Exploration for all Wolves
 
 par(mfrow = c(2,3))
@@ -86,7 +50,7 @@ boxplot(DistFromHumanAccess2~usedFactor, data=wolfkde, main = "Dist. Human Acces
 boxplot(DistFromHighHumanAccess2~usedFactor, data=wolfkde, main = "Dist. High Human Access", ylab="elk_w2", xlab="usedFactor")
 
 ## Splitting by Wolf Packs
-  
+
 ## subset for Bow Valley Pack
 bvkde<- subset(wolfkde, subset=pack =="Bow Valley")
 par(mfrow = c(2,3))
@@ -150,8 +114,9 @@ wolf_df %>% group_by(pack, used) %>% summarise(sheep = mean(sheep_w2))
 wolf_df %>% group_by(pack, used) %>% summarise(deer = mean(deer_w2))
 wolf_df %>% group_by(pack, used) %>% summarise(goat = mean(goat_w2))
 
+###############################################################################
+#   [OBJECTIVE 2 - Logistic Regressions]                                    ####
 
-# Learning about Logisitic Regresson through Simulating 
 ## First lets flip fair coins 100 times
 rbinom(100, 1, 0.5)
 trial = rbinom(100, 1, 0.5)
@@ -196,8 +161,8 @@ lines(yhat~x)
 
 #Excercise* Try negative coefficients, and/or, try a different 'intercept' value, the 0 in the plogis() command above. 
 
-# Objective 4 -  Univariate Logistic Regression with glm
-
+###############################################################################
+#   [OBJECTIVE 3 - Univariate Logistic Regression]                          ####
 
 elev <- glm(used ~ Elevation2, family=binomial(logit), data=wolfkde)
 summary(elev)
@@ -232,7 +197,8 @@ plot(elevBnp, elevPred, type="l", ylim = c(0,1.0), ylab= "Pr(Used)")
 plot(wolfkde$Elevation2, wolfkde$used)
 lines(elevBnp, elevPred, type="l", ylab= "Pr(Used)")
 
-# Objective 5 - Interpreting Coefficients in Logistic Models
+###############################################################################
+#   [OBJECTIVE 4 - Interpreting Coefficients in Logistic Models]            ####
 
 ## next human use
 distHuman <- glm(used ~ DistFromHumanAccess2, family=binomial(logit), data=wolfkde)
@@ -245,10 +211,10 @@ plot(disthumanBnp, disthumanPred, type="l", ylab= "Pr(Used)")
 plot(wolfkde$DistFromHumanAccess2, wolfkde$used)
 lines(disthumanBnp, disthumanPred, type="l", ylab= "Pr(Used)")
 
-Similarly, how do wolves respond to high human activity?
- 
-## next human use
-distHHuman <- glm(used ~ DistFromHighHumanAccess2, family=binomial(logit), data=wolfkde)
+# Similarly, how do wolves respond to high human activity?
+  
+  ## next human use
+  distHHuman <- glm(used ~ DistFromHighHumanAccess2, family=binomial(logit), data=wolfkde)
 summary(distHHuman)
 hist(wolfkde$DistFromHighHumanAccess2)
 disthumanBnp = 0:10000
@@ -288,7 +254,8 @@ head(wolfkde)
 hist(wolfkde$fitted.Elev)
 plot(wolfkde$fitted.Elev, wolfkde$Elevation2)
 
-# Objective 6 -  Improving Graphical Predictions using ggplot2
+###############################################################################
+#   [OBJECTIVE 5 -  Improving Graphical Predictions using ggplot2]          ####
 
 # ggplot 2 explore basic histogram functio
 ggplot(wolfkde, aes(x=wolfkde$fitted.Elev)) + geom_histogram()
@@ -319,7 +286,7 @@ ggplot(wolfkde, aes(x=elk_w2, y=used)) + geom_point() +geom_jitter(aes(colour = 
 
 
 ## lets redo elevation jittered by used
-ggplot(wolfkde, aes(x=Elevation2, y=used)) + geom_point() +geom_jitter(aes(colour = used), width=0.25, height = 0.05)+ stat_smooth(method="glm", 
+ggplot(wolfkde, aes(x=Elevation2, y=used)) + geom_point() +geom_jitter(aes(colour = used), width=0.25, height = 0.05)+ stat_smooth(method="glm")
 
 ## Splitting by wolf pack 
 
