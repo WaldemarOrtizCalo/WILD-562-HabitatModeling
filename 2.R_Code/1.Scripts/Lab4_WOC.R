@@ -1,54 +1,44 @@
-# title: 'WILD 562 Lab4 : Categorical Covariates'
-# author: "Mark Hebblewhite"
+#   Script Details                                                          ####
 
-setwd("/Users/mark.hebblewhite/Box Sync/Teaching/UofMcourses/WILD562/Spring2021/Labs/lab4")
+# Author: Waldemar Ortiz-Calo
 
-# Lab 4: Categorical Resource Selection
-## Preliminaries - Loading Packages
-#function to install and load required packages
-ipak <- function(pkg){
-  new.pkg <- pkg[!(pkg %in% installed.packages()[, "Package"])]
-  if (length(new.pkg)) 
-    install.packages(new.pkg, dependencies = TRUE)
-  sapply(pkg, require, character.only = TRUE)
-}
+# Date:2021-02-04 
 
-#load or install these packages:
-packages <- c("tidyverse", "adehabitatHS", "adehabitatHR", "mapview", "rgdal", "sp", "raster","ggplot2","colorRamps","rgeos")
+# Purpose: 
 
-#run function to install packages
-ipak(packages)
-#############################################################
-# Importing Landcover Map from an ArcGIS 
-## Loading and Manipulating Landcover Data
-landcover<-raster("Data/landcover/landcover")
-image(landcover, col=rainbow(16))
-landcover
-#str(landcover)
-landcover@data@attributes
+###############################################################################
+#   Library / Functions / Data                                              ####
 
-landcover@crs@projargs
-extent(landcover)
+#      Library                                                              ####
+library(tidyverse)
+library(adehabitatHS)
+library(adehabitatHR)
+library(mapview)
+library(rgdal)
+library(sp)
+library(raster)
+library(ggplot2)
+library(colorRamps)
+library(rgeos)
 
-writeRaster(landcover, "Data/landcover16.tif", "GTiff", overwrite = TRUE)
-landcover16 <- raster("Data/landcover16.tif") # bringing it back in
+#      Functions                                                            ####
+
+#      Data                                                                 ####
+
+#        [Landcover]                                                        ####
+
+landcover16<-raster("1.Data/Lab4_data/landcover16.tif")
+
 res(landcover16)
 extent(landcover16)
 crs(landcover16)
 str(landcover16@data@attributes)
 plot(landcover16)
 
-data1 <- data.frame(landcover@data@attributes[[1]][2:3])
-names(landcover16@data@attributes[[1]])[2]<-"COUNT"
-landcover16@data@attributes <- merge(landcover16@data@attributes, data1, by="COUNT")
-landcover16@data@attributes<-landcover16@data@attributes[c(2,1,3)]
-str(landcover16@data@attributes)
-landcover16@data@attributes
+#        [Wolf]                                                             ####
 
-#############################################################
-##### Bring in Wolf Data  ###################################
-
-wolfyht<-shapefile("Data/wolfyht.shp")
+# Wolf Data
+wolfyht<-shapefile("1.Data/Lab4_data/wolfyht.shp")
 plot(landcover16, col=rainbow(16))
 plot(wolfyht, add=TRUE, type="p", color = "gray25", pch=19, cex = 0.75)
 mapview(landcover16, zcol = "HABITATTYPE") + wolfyht
@@ -60,11 +50,9 @@ plot(landcover16, col=rainbow(16), ext=yht.raster)
 legend("topleft", legend = c("Open Conifer", "Mod. Conifer", "Closed Conifer", "Deciduous", "Mixed", "Regen", "Herb", "Shrub", "Water", "Rock-Ice", "Cloud", "Burn-Forest", "Burn-Grassland", "Burn-Shrub", "Alpine Herb", "Alpine Shrub"), fill = rainbow(16), cex=0.75)
 plot(wolfyht, add=TRUE, type="p", color = "gray25", pch=19)
 
-#############################################################
 # Loading wolfkde dataframe from last lab with landcover extracted
-#######
 
-wolfkde <- read.csv("Data/wolfkde.csv")
+wolfkde <- read.csv("1.Data/Lab4_data/wolfkde.csv")
 table(wolfkde$used, wolfkde$pack)
 summary(wolfkde)
 #wolfkde <- na.omit(wolfkde)
@@ -76,10 +64,8 @@ ggplot(wolfkde, aes(x=EASTING, y = NORTHING, color=usedFactor)) + geom_point() +
 # or, Facetting by Used
 ggplot(wolfkde, aes(x=EASTING, y = NORTHING)) + geom_point() + stat_density2d() + facet_grid(pack ~ usedFactor, scales="free")
 
-#############################################################
-# Univariate Model-fitting 
-#############################################################
-
+###############################################################################
+#   Univariate Model-Fitting                                                ####
 
 ### First for all packs
 elev <- glm(used ~ Elevation2, family=binomial(logit), data=wolfkde)
@@ -100,11 +86,8 @@ modelnames = c("elev","disthha", "distacc", "sheep", "goat", "elk", "moose", "de
 estimates.all = matrix(models, nrow=2*length(modelnames), ncol=2, dimnames = list(paste(rep(modelnames, each=2),c("intercept", "coefficient")), c("B", "SE")))
 estimates.all
 plot(estimates.all)
-
-#############################################################
-# Categorical Resource Selection
-#############################################################
-
+###############################################################################
+#   Categorical Resource Selection                                          ####
 levels(wolfkde$landcover16) ## see, all we have is landcover code
 
 wolfkde$habitatType = ifelse(wolfkde$landcover16 == 0, "NA", 
@@ -147,9 +130,9 @@ wolfkde3$landcov.f = factor(wolfkde3$landcover16,labels = names.m$unique.wolfkde
 table(wolfkde3$landcov.f, wolfkde3$usedFactor)
 table(wolfkde3$landcov.f, wolfkde3$landcover16)
 
-#############################################################
-# Univariate Selection Ratio's
-#############################################################
+
+###############################################################################
+#   Univariate Selection Ratio's                                            ####
 
 table(wolfkde3$habitatType, wolfkde3$usedFactor)
 
@@ -158,6 +141,7 @@ table(wolfkde3$habitatType, wolfkde3$usedFactor)
 landcovSelection <- table(wolfkde3$habitatType, wolfkde3$usedFactor)
 landcovSelection2 <- as.data.frame.matrix(landcovSelection)
 colnames(landcovSelection2)[1:2] <- c("avail","used")
+
 ## Calculate Proportional Availability
 sum(landcovSelection2$used)
 landcovSelection2$pUse <- landcovSelection2$used /413
@@ -176,7 +160,7 @@ plot(landcovSelection2$selection, landcovSelection2$selectionN)
 landcovSelection2
 
 ## Selectivity Coefficient, the Ln-Selection Ratio
-Next we take the natural logarithm, ln() which in R is represented by log()
+# Next we take the natural logarithm, ln() which in R is represented by log()
 landcovSelection2$lnSelection <- log(landcovSelection2$selection)
 
 ## Lets make a new column of habitatType
@@ -186,7 +170,7 @@ landcovSelection2$landcoverType <- c("Alpine Herb", "Alpine Shrub", "Burn-Forest
 ggplot(data=landcovSelection2, aes(x=landcoverType, y = lnSelection)) + geom_point(size=4) + theme(axis.text.x = element_text(angle = 90))
 
 ## it might be handy to save this
-write.table(landcovSelection2, "Data/wolfselection.csv", sep=",", row.names = TRUE, col.names=TRUE)
+#write.table(landcovSelection2, "Data/wolfselection.csv", sep=",", row.names = TRUE, col.names=TRUE)
 #str(landcovSelection2)
 
 ## Selection ratio
@@ -198,9 +182,8 @@ ggplot(landcovSelection2, aes(x=landcoverType, y = lnSelection)) +
 ## Fancier ggplot
 ggplot(landcovSelection2, aes(x=selection, y = lnSelection)) + stat_smooth()
 
-#############################################################
-# Selection Ratio's in adehabitatHS
-#############################################################
+###############################################################################
+#   Selection Ratio's in adehabitatHS                                       ####
 
 ## Estimated available proportions on design I data
 elk.avail <- c(15, 61, 84, 40)
@@ -213,11 +196,9 @@ names(elk.avail) <- names(elk.used)
 ## plot the values of the selection ratios
 plot(wiRatio)
 
-#############################################################
-# Categorical Logistic Regression
-#############################################################
+###############################################################################
+#   Categorical Logistic Regression                                         ####
 
-?contrast
 contrasts(wolfkde3$landcov.f) = contr.treatment(15) 
 ### To see the design matrix assigned
 attributes(wolfkde3$landcov.f)
@@ -332,3 +313,5 @@ coef.table
 
 # figure of the Beta coefficients 
 ggplot(coef.table, aes(x=habitatType, y=Estimate, colour=model)) + geom_point(size = 5) + theme(axis.text.x = element_text(angle = 90))
+
+###############################################################################
